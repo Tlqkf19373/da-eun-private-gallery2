@@ -8,6 +8,7 @@ app.secret_key = "ppoo6689"
 UPLOAD_FOLDER = "static/uploads"
 THUMB_FOLDER = "thumbs"
 ADMIN_PASSWORD = "ppoo6689"
+upload_dir = UPLOAD_FOLDER  # 꼭 필요함!
 
 # 초기 폴더 생성
 def create_folders():
@@ -25,15 +26,41 @@ def generate_thumbnail(image_path, thumb_path):
     except Exception as e:
         print(f"썸네일 생성 실패: {e}")
 
+# 앱 실행 시 폴더 자동 생성
+create_folders()
+
 @app.route("/")
 def index():
     return redirect(url_for("gallery"))
 
 @app.route("/gallery")
 def gallery():
-    folders = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isdir(os.path.join(UPLOAD_FOLDER, f))]
     is_admin = session.get("is_admin", False)
-    return render_template("gallery.html", folders=folders, is_admin=is_admin)
+    folders = [f for f in os.listdir(upload_dir) if os.path.isdir(os.path.join(upload_dir, f))]
+    images = {}
+
+    for folder in folders:
+        folder_path = os.path.join(upload_dir, folder)
+        thumb_path = os.path.join(folder_path, THUMB_FOLDER)
+        os.makedirs(thumb_path, exist_ok=True)
+
+        thumbs = []
+        fulls = []
+
+        for fname in os.listdir(folder_path):
+            fpath = os.path.join(folder_path, fname)
+            if os.path.isfile(fpath) and fname.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                fulls.append(fname)
+
+                thumb_file = os.path.join(thumb_path, fname)
+                if not os.path.exists(thumb_file):
+                    generate_thumbnail(fpath, thumb_file)
+
+                thumbs.append(fname)
+
+        images[folder] = {"thumbs": thumbs, "full": fulls}
+
+    return render_template("gallery.html", folders=folders, images=images, is_admin=is_admin)
 
 @app.route("/gallery/<folder>")
 def folder_view(folder):
@@ -69,5 +96,4 @@ def logout():
     return redirect(url_for("gallery"))
 
 if __name__ == "__main__":
-    create_folders()
     app.run(debug=True)
