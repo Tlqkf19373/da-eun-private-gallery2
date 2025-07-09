@@ -9,19 +9,21 @@ UPLOAD_FOLDER = "static/uploads"
 THUMB_FOLDER = "thumbs"
 ADMIN_PASSWORD = "ppoo6689"
 
-# 갤러리 폴더 생성 함수
+# 초기 폴더 생성
 def create_folders():
     for folder in ["book1", "book2"]:
         folder_path = os.path.join(UPLOAD_FOLDER, folder)
         thumb_path = os.path.join(folder_path, THUMB_FOLDER)
-        os.makedirs(folder_path, exist_ok=True)
         os.makedirs(thumb_path, exist_ok=True)
 
 def generate_thumbnail(image_path, thumb_path):
     size = (300, 300)
-    with Image.open(image_path) as img:
-        img.thumbnail(size)
-        img.save(thumb_path)
+    try:
+        with Image.open(image_path) as img:
+            img.thumbnail(size)
+            img.save(thumb_path)
+    except Exception as e:
+        print(f"썸네일 생성 실패: {e}")
 
 @app.route("/")
 def index():
@@ -30,13 +32,15 @@ def index():
 @app.route("/gallery")
 def gallery():
     folders = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isdir(os.path.join(UPLOAD_FOLDER, f))]
-    images = {}
-    for folder in folders:
-        thumb_dir = os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER)
-        thumbs = os.listdir(thumb_dir)
-        images[folder] = {"thumbs": thumbs}
     is_admin = session.get("is_admin", False)
-    return render_template("gallery.html", folders=folders, images=images, is_admin=is_admin)
+    return render_template("gallery.html", folders=folders, is_admin=is_admin)
+
+@app.route("/gallery/<folder>")
+def folder_view(folder):
+    thumb_dir = os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER)
+    thumbs = sorted(os.listdir(thumb_dir)) if os.path.exists(thumb_dir) else []
+    is_admin = session.get("is_admin", False)
+    return render_template("folder.html", folder=folder, thumbs=thumbs, is_admin=is_admin)
 
 @app.route("/upload/<folder>", methods=["POST"])
 def upload(folder):
@@ -48,7 +52,7 @@ def upload(folder):
         file.save(save_path)
         thumb_path = os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER, file.filename)
         generate_thumbnail(save_path, thumb_path)
-    return redirect(url_for("gallery"))
+    return redirect(url_for("folder_view", folder=folder))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
