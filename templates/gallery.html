@@ -22,7 +22,7 @@
     <div class="folder">
         <h2>{{ folder }}</h2>
         <div class="thumbs">
-            {% for thumb in thumbnails[folder] %}
+            {% for thumb in images[folder]["thumbs"] %}
                 <img src="{{ url_for('static', filename='uploads/' + folder + '/thumbs/' + thumb) }}">
             {% endfor %}
         </div>
