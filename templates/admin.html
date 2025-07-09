@@ -1,13 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>관리자 로그인</title></head>
-<body>
-    <h2>🔑 관리자 로그인</h2>
-    <form method="post">
-        <input type="password" name="password" placeholder="비밀번호 입력">
-        <button type="submit">로그인</button>
-    </form>
-    <br>
-    <a href="{{ url_for('index') }}">← 돌아가기</a>
-</body>
-</html>
+<h2>관리자 로그인</h2>
+<form method="post">
+  <input type="password" name="password" placeholder="비밀번호" required>
+  <button type="submit">로그인</button>
+</form>
