@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: da-eun-private-gallery2
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app --bind 0.0.0.0:10000
