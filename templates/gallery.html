@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>{{ folder }} 사진첩</title></head>
+<head><meta charset="utf-8"><title>{{ folder }}</title></head>
 <body>
-    <h1>📂 {{ folder }} 사진첩</h1>
-    {% for image in images %}
-        <div>
-            <img src="{{ url_for('static', filename='uploads/' + folder + '/' + image) }}" width="200">
-            {% if logged_in %}
-                <a href="{{ url_for('delete', folder=folder, filename=image) }}">삭제</a>
-            {% endif %}
-        </div>
-    {% endfor %}
-
-    {% if logged_in %}
-        <h3>사진 업로드</h3>
-        <form method="post" enctype="multipart/form-data" action="{{ url_for('upload', folder=folder) }}">
-            <input type="file" name="file">
-            <button type="submit">업로드</button>
-        </form>
+    <h2>{{ folder }}</h2>
+    <a href="/">← 목록으로</a><br>
+    {% if admin %}
+    <form action="/upload/{{ folder }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="업로드">
+    </form>
     {% endif %}
-    <br>
-    <a href="{{ url_for('index') }}">← 돌아가기</a>
+    <div>
+        {% for img in images %}
+            <div style="margin:10px; display:inline-block">
+                <img src="/static/uploads/{{ folder }}/{{ img }}" width="200"><br>
+                {% if admin %}
+                <form action="/delete/{{ folder }}/{{ img }}" method="post">
+                    <button type="submit">삭제</button>
+                </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
 </body>
 </html>
