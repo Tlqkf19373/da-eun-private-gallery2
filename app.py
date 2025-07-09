@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session
 import os
 from werkzeug.utils import secure_filename
 from PIL import Image
@@ -8,74 +8,79 @@ app.secret_key = 'ppoo6689'
 
 UPLOAD_FOLDER = 'static/uploads'
 THUMB_FOLDER = 'thumbs'
+FOLDERS = ['book1', 'book2']
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-# 폴더 자동 생성
-def create_folders():
-    for folder in ['book1', 'book2']:
-        os.makedirs(os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER), exist_ok=True)
-
-create_folders()
+# 관리자 비밀번호
+ADMIN_PASSWORD = 'ppoo6689'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def get_images(book):
-    path = os.path.join(UPLOAD_FOLDER, book)
-    files = [f for f in os.listdir(path) if allowed_file(f)]
-    return files
+def create_folders():
+    for folder in FOLDERS:
+        target_thumb_path = os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER)
+        if not os.path.exists(target_thumb_path):
+            os.makedirs(target_thumb_path, exist_ok=True)
+        elif not os.path.isdir(target_thumb_path):
+            os.remove(target_thumb_path)
+            os.makedirs(target_thumb_path, exist_ok=True)
 
-def create_thumbnail(image_path, thumb_path):
-    size = (300, 300)
-    img = Image.open(image_path)
-    img.thumbnail(size)
-    img.save(thumb_path)
+create_folders()
 
 @app.route('/')
-def login():
-    return render_template('login.html')
+def index():
+    return render_template('index.html', folders=FOLDERS, is_admin=session.get('admin', False))
 
-@app.route('/login', methods=['POST'])
-def do_login():
-    password = request.form['password']
-    if password == 'ppoo6689':
-        session['logged_in'] = True
-        return redirect(url_for('gallery'))
-    return redirect(url_for('login'))
+@app.route('/<folder>')
+def gallery(folder):
+    if folder not in FOLDERS:
+        return "Folder not found", 404
+    path = os.path.join(UPLOAD_FOLDER, folder)
+    thumb_path = os.path.join(path, THUMB_FOLDER)
+    images = [f for f in os.listdir(path) if allowed_file(f)]
+    return render_template('gallery.html', images=images, folder=folder, thumbs=os.listdir(thumb_path), is_admin=session.get('admin', False))
+
+@app.route('/upload/<folder>', methods=['POST'])
+def upload(folder):
+    if not session.get('admin'):
+        return "Unauthorized", 403
+    if 'file' not in request.files:
+        return redirect(request.url)
+    file = request.files['file']
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        folder_path = os.path.join(UPLOAD_FOLDER, folder)
+        save_path = os.path.join(folder_path, filename)
+        file.save(save_path)
+
+        # 썸네일 생성
+        thumb_dir = os.path.join(folder_path, THUMB_FOLDER)
+        img = Image.open(save_path)
+        img.thumbnail((300, 300))
+        img.save(os.path.join(thumb_dir, filename))
+    return redirect(url_for('gallery', folder=folder))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin'] = True
+        return redirect(url_for('index'))
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('gallery'))
+    session.pop('admin', None)
+    return redirect(url_for('index'))
 
-@app.route('/gallery')
-def gallery():
-    book1_images = get_images('book1')
-    book2_images = get_images('book2')
-    return render_template('gallery.html', book1=book1_images, book2=book2_images, logged_in=session.get('logged_in'))
+@app.route('/uploads/<folder>/<filename>')
+def uploaded_file(folder, filename):
+    return send_from_directory(os.path.join(UPLOAD_FOLDER, folder), filename)
 
-@app.route('/upload/<book>', methods=['POST'])
-def upload(book):
-    if not session.get('logged_in'):
-        return "Unauthorized", 403
-
-    if 'file' not in request.files:
-        return redirect(url_for('gallery'))
-
-    file = request.files['file']
-    if file.filename == '' or not allowed_file(file.filename):
-        return redirect(url_for('gallery'))
-
-    filename = secure_filename(file.filename)
-    book_path = os.path.join(UPLOAD_FOLDER, book)
-    file_path = os.path.join(book_path, filename)
-    file.save(file_path)
-
-    thumb_dir = os.path.join(book_path, THUMB_FOLDER)
-    thumb_path = os.path.join(thumb_dir, filename)
-    create_thumbnail(file_path, thumb_path)
-
-    return redirect(url_for('gallery'))
+@app.route('/uploads/<folder>/thumbs/<filename>')
+def thumbnail_file(folder, filename):
+    return send_from_directory(os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER), filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
