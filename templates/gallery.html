@@ -1,56 +1,45 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>갤러리</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .folder { margin-bottom: 40px; }
-    .thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
-    .thumbs img { width: 150px; height: auto; border: 1px solid #ccc; border-radius: 6px; }
-    .upload-form, .delete-form { margin-top: 10px; }
-    .admin-actions { margin-top: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>갤러리</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .folder { margin-bottom: 40px; }
+        .thumbs img { width: 150px; height: auto; margin: 5px; border-radius: 4px; }
+        .admin-link { margin-top: 20px; display: block; }
+        .upload-form { margin-top: 10px; }
+        @media (max-width: 600px) {
+            .thumbs img { width: 100px; }
+        }
+    </style>
 </head>
 <body>
-  <h1>갤러리</h1>
+    <h1>갤러리</h1>
 
-  {% for folder, data in gallery_data.items() %}
+    {% for folder in folders %}
     <div class="folder">
-      <h2>{{ folder }}</h2>
-      <div class="thumbs">
-        {% for thumb in data.thumbs %}
-          <div>
-            <a href="/static/uploads/{{ folder }}/{{ thumb }}" target="_blank">
-              <img src="/static/uploads/{{ folder }}/thumbs/{{ thumb }}">
-            </a>
-            {% if is_admin %}
-            <form class="delete-form" method="post" action="/delete/{{ folder }}/{{ thumb }}">
-              <button type="submit">삭제</button>
-            </form>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
+        <h2>{{ folder }}</h2>
+        <div class="thumbs">
+            {% for thumb in thumbnails[folder] %}
+                <img src="{{ url_for('static', filename='uploads/' + folder + '/thumbs/' + thumb) }}">
+            {% endfor %}
+        </div>
 
-      {% if is_admin %}
-        <form class="upload-form" action="/upload/{{ folder }}" method="post" enctype="multipart/form-data">
-          <input type="file" name="file" required>
-          <button type="submit">업로드</button>
+        {% if is_admin %}
+        <form class="upload-form" action="{{ url_for('upload', folder=folder) }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <button type="submit">업로드</button>
         </form>
-      {% endif %}
+        {% endif %}
     </div>
-  {% endfor %}
+    {% endfor %}
 
-  {% if is_admin %}
-    <div class="admin-actions">
-      <a href="/logout">로그아웃</a>
-    </div>
-  {% else %}
-    <div class="admin-actions">
-      <a href="/login">관리자 로그인</a>
-    </div>
-  {% endif %}
+    {% if is_admin %}
+    <a class="admin-link" href="{{ url_for('logout') }}">로그아웃</a>
+    {% else %}
+    <a class="admin-link" href="{{ url_for('login') }}">관리자 로그인</a>
+    {% endif %}
 </body>
 </html>
