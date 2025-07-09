@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ album }} 사진첩</title>
+</head>
+<body>
+  <h1>📷 {{ album }} 사진첩</h1>
+  {% if session.get('admin') %}
+    <form action="/upload/{{ album }}" method="post" enctype="multipart/form-data">
+      <input type="file" name="photo" required>
+      <button type="submit">업로드</button>
+    </form>
+  {% endif %}
+  <div>
+    {% for photo in photos %}
+      <div>
+        <img src="/static/uploads/{{ album }}/{{ photo }}" width="200"><br>
+        {% if session.get('admin') %}
+          <a href="/delete/{{ album }}/{{ photo }}">삭제</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  <p><a href="/">← 목록으로</a></p>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Da_eun 사진첩</title>
+</head>
+<body>
+  <h1>📚 사진첩 목록</h1>
+  <ul>
+    {% for album in albums %}
+      <li><a href="/gallery/{{ album }}">{{ album }}</a></li>
+    {% endfor %}
+  </ul>
+  <p><a href="/admin">관리자 로그인</a></p>
+</body>
+</html>
