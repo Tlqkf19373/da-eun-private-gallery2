@@ -3,4 +3,5 @@ services:
     name: da-eun-private-gallery2
     env: python
     buildCommand: ""
-    startCommand: gunicorn app:app --bind 0.0.0.0:10000
+    startCommand: "python app.py"
+    plan: free
