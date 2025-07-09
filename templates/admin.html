@@ -5,15 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 로그인</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        input { font-size: 1rem; padding: 4px 8px; }
-        button { padding: 4px 10px; font-size: 1rem; }
+        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: 50px auto; }
+        h1 { margin-bottom: 20px; }
+        input, button {
+            font-size: 1rem;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
     <h1>관리자 로그인</h1>
-    <form action="{{ url_for('login') }}" method="post">
-        <input type="password" name="password" placeholder="비밀번호">
+    <form method="post" action="{{ url_for('login') }}">
+        <input type="password" name="password" placeholder="비밀번호 입력" required>
         <button type="submit">로그인</button>
     </form>
 </body>
