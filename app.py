@@ -1,83 +1,81 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session
 import os
+from werkzeug.utils import secure_filename
 from PIL import Image
 
 app = Flask(__name__)
-app.secret_key = 'ppoo6689'  # 로그인 비번
+app.secret_key = 'ppoo6689'
 
 UPLOAD_FOLDER = 'static/uploads'
-THUMB_FOLDER_NAME = 'thumbs'
-PASSWORD = 'ppoo6689'
+THUMB_FOLDER = 'thumbs'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+# 폴더 자동 생성
+def create_folders():
+    for folder in ['book1', 'book2']:
+        os.makedirs(os.path.join(UPLOAD_FOLDER, folder, THUMB_FOLDER), exist_ok=True)
+
+create_folders()
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_images(book):
-    folder_path = os.path.join(UPLOAD_FOLDER, book)
-    thumb_path = os.path.join(folder_path, THUMB_FOLDER_NAME)
-    os.makedirs(thumb_path, exist_ok=True)
+    path = os.path.join(UPLOAD_FOLDER, book)
+    files = [f for f in os.listdir(path) if allowed_file(f)]
+    return files
 
-    image_files = []
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)
-        if os.path.isfile(file_path) and filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-            thumb_file = os.path.join(thumb_path, filename)
-            if not os.path.exists(thumb_file):
-                make_thumbnail(file_path, thumb_file)
-            image_files.append({
-                'full': f"/{file_path.replace(os.sep, '/')}",
-                'thumb': f"/{thumb_file.replace(os.sep, '/')}"
-            })
-    return image_files
-
-
-def make_thumbnail(image_path, thumb_path):
-    try:
-        img = Image.open(image_path)
-        img.thumbnail((300, 300))
-        img.save(thumb_path)
-    except Exception as e:
-        print(f"Thumbnail Error: {e}")
-
+def create_thumbnail(image_path, thumb_path):
+    size = (300, 300)
+    img = Image.open(image_path)
+    img.thumbnail(size)
+    img.save(thumb_path)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        pw = request.form.get('password')
-        if pw == PASSWORD:
-            session['admin'] = True
-            return redirect(url_for('admin'))
-        else:
-            return "비밀번호가 틀렸습니다.", 401
-    return render_template('admin.html')
+    return render_template('login.html')
 
+@app.route('/login', methods=['POST'])
+def do_login():
+    password = request.form['password']
+    if password == 'ppoo6689':
+        session['logged_in'] = True
+        return redirect(url_for('gallery'))
+    return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
-    session.pop('admin', None)
-    return redirect(url_for('index'))
+    session.pop('logged_in', None)
+    return redirect(url_for('gallery'))
 
+@app.route('/gallery')
+def gallery():
+    book1_images = get_images('book1')
+    book2_images = get_images('book2')
+    return render_template('gallery.html', book1=book1_images, book2=book2_images, logged_in=session.get('logged_in'))
 
-@app.route('/admin')
-def admin():
-    if not session.get('admin'):
-        return redirect(url_for('login'))
-    books = os.listdir(UPLOAD_FOLDER)
-    books = [b for b in books if os.path.isdir(os.path.join(UPLOAD_FOLDER, b))]
-    return render_template('gallery.html', books=books)
+@app.route('/upload/<book>', methods=['POST'])
+def upload(book):
+    if not session.get('logged_in'):
+        return "Unauthorized", 403
 
+    if 'file' not in request.files:
+        return redirect(url_for('gallery'))
 
-@app.route('/gallery/<book>')
-def gallery(book):
-    if not session.get('admin'):
-        return redirect(url_for('login'))
-    images = get_images(book)
-    return render_template('gallery.html', images=images, current_book=book, books=[])
+    file = request.files['file']
+    if file.filename == '' or not allowed_file(file.filename):
+        return redirect(url_for('gallery'))
 
+    filename = secure_filename(file.filename)
+    book_path = os.path.join(UPLOAD_FOLDER, book)
+    file_path = os.path.join(book_path, filename)
+    file.save(file_path)
 
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    thumb_dir = os.path.join(book_path, THUMB_FOLDER)
+    thumb_path = os.path.join(thumb_dir, filename)
+    create_thumbnail(file_path, thumb_path)
+
+    return redirect(url_for('gallery'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
