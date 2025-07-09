@@ -1,23 +1,44 @@
-<h2>{{ book_name }} 사진첩</h2>
-<ul>
-  {% for image in images %}
-    <li>
-      <img src="{{ url_for('static', filename='uploads/' ~ book_name ~ '/' ~ image) }}" width="200"><br>
-      {% if is_admin %}
-        <form method="post" action="{{ url_for('delete_image', book_name=book_name, filename=image) }}">
-          <button type="submit">삭제</button>
-        </form>
-      {% endif %}
-    </li>
-  {% endfor %}
-</ul>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; padding: 10px; }
+        .thumb { width: 100px; margin: 5px; border: 1px solid #ccc; display: inline-block; }
+        .thumb img { width: 100%; display: block; }
+        .nav { margin-bottom: 20px; }
+        .book { margin-right: 10px; display: inline-block; }
+        @media (max-width: 600px) {
+            .thumb { width: 30%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        {% if current_book %}
+            <a href="/admin">← 돌아가기</a> |
+        {% endif %}
+        <a href="/logout">로그아웃</a>
+    </div>
 
-{% if is_admin %}
-  <h3>사진 업로드</h3>
-  <form method="post" action="{{ url_for('upload', book_name=book_name) }}" enctype="multipart/form-data">
-    <input type="file" name="image" required>
-    <button type="submit">업로드</button>
-  </form>
-{% endif %}
+    {% if books %}
+        <h2>폴더 선택</h2>
+        {% for book in books %}
+            <div class="book">
+                <a href="/gallery/{{ book }}">{{ book }}</a>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-<a href="{{ url_for('index') }}">← 돌아가기</a>
+    {% if images %}
+        <h2>{{ current_book }}의 이미지</h2>
+        {% for img in images %}
+            <div class="thumb">
+                <a href="{{ img.full }}" target="_blank">
+                    <img src="{{ img.thumb }}">
+                </a>
+            </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
