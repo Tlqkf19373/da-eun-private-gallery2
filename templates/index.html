@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>사진첩 목록</title></head>
+<head><meta charset="utf-8"><title>사진첩 목록</title></head>
 <body>
-    <h1>📚 사진첩 목록</h1>
+    <h1>사진첩 목록</h1>
     <ul>
         {% for folder in folders %}
-            <li><a href="{{ url_for('gallery', folder=folder) }}">{{ folder }}</a></li>
+        <li><a href="{{ url_for('gallery', folder=folder) }}">{{ folder }}</a></li>
         {% endfor %}
     </ul>
-    {% if logged_in %}
-        <p><a href="{{ url_for('logout') }}">로그아웃</a></p>
+    {% if session.get('admin') %}
+        <a href="{{ url_for('logout') }}">로그아웃</a>
     {% else %}
-        <p><a href="{{ url_for('login') }}">관리자 로그인</a></p>
+        <a href="{{ url_for('login') }}">관리자 로그인</a>
     {% endif %}
 </body>
 </html>
