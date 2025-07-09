@@ -1,5 +1,20 @@
-<h1>관리자 로그인</h1>
-<form method="post" action="/login">
-    <input type="password" name="password" placeholder="비밀번호">
-    <button type="submit">로그인</button>
-</form>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 로그인</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input { font-size: 1rem; padding: 4px 8px; }
+        button { padding: 4px 10px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>관리자 로그인</h1>
+    <form action="{{ url_for('login') }}" method="post">
+        <input type="password" name="password" placeholder="비밀번호">
+        <button type="submit">로그인</button>
+    </form>
+</body>
+</html>
